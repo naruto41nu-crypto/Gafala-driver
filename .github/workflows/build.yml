@@ -60,8 +60,8 @@ jobs:
       run: |
         cd mesa-src
         mkdir -p subprojects
-        meson wrap install libdrm
-        meson wrap install zlib
+        [ -f subprojects/libdrm.wrap ] || meson wrap install libdrm
+        [ -f subprojects/zlib.wrap ] || meson wrap install zlib
 
     - name: Configure Meson Build
       run: |
