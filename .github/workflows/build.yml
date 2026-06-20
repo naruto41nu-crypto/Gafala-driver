@@ -19,7 +19,7 @@ jobs:
     - name: Install Dependencies
       run: |
         sudo apt-get update
-        sudo apt-get install -y meson ninja-build python3-dev libxrandr-dev glslang-tools zip pkg-config wget tar
+        sudo apt-get install -y meson ninja-build python3-dev python3-mako libxrandr-dev glslang-tools zip pkg-config wget tar
         # Kito tambah pip install mako di siko Jok!
         pip install mako
 
@@ -67,7 +67,8 @@ jobs:
           -Dvulkan-drivers=freedreno \
           -Dandroid-stub=true \
           -Dbuildtype=release \
-          -Db_lto=true
+          -Db_lto=true \
+          --force-fallback-for=libdrm
 
     - name: Compile Driver Code
       run: |
