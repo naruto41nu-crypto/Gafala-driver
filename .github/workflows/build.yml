@@ -1,7 +1,7 @@
 name: Build Custom Mesa Turnip Adreno 720
 
 on:
-  workflow_dispatch:
+  workflow_dispatch: # Biar pacak kau klik tombol Run manual dari HP
 
 jobs:
   build:
@@ -53,8 +53,12 @@ jobs:
     - name: Configure Meson Build
       run: |
         export PATH=$ANDROID_NDK_LATEST_HOME/toolchains/llvm/prebuilt/linux-x86_64/bin:$PATH
-        # Pindah langsung ke folder source biar meson gak tersesat
         cd mesa-src
+        echo "--- ISI FOLDER MESA-SRC ---"
+        ls -F
+        echo "--- MENCARI MESON.BUILD ---"
+        find . -name meson.build
+        # Menjalankan setup di root folder setelah melacak posisi aslinya
         meson setup builddir \
           --cross-file ../.github/workflows/android-aarch64.txt \
           -Dplatforms=android \
