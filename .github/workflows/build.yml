@@ -39,7 +39,6 @@ jobs:
     - name: Setup Cross-Compilation File
       run: |
         mkdir -p .github/workflows/
-        # Kito perbaiki binari [binaries] nyo pake rute LLVM modern bawak'an NDK
         cat <<EOF > .github/workflows/android-aarch64.txt
         [binaries]
         c = 'aarch64-linux-android33-clang'
@@ -59,10 +58,13 @@ jobs:
       run: |
         export PATH=$ANDROID_NDK_LATEST_HOME/toolchains/llvm/prebuilt/linux-x86_64/bin:$PATH
         cd mesa-src
+        # Kito matike gallium driver & opencl biar gak nyari libclc lagi Jok
         meson setup builddir/ \
           --cross-file ../.github/workflows/android-aarch64.txt \
           -Dplatforms=android \
+          -Dgallium-drivers= \
           -Dvulkan-drivers=freedreno \
+          -Dopencl=disabled \
           -Dbuildtype=release \
           -Db_lto=true
 
