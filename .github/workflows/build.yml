@@ -58,12 +58,13 @@ jobs:
       run: |
         export PATH=$ANDROID_NDK_LATEST_HOME/toolchains/llvm/prebuilt/linux-x86_64/bin:$PATH
         cd mesa-src
-        # Di siko kito cuman pake gallium kosong langan vulkan freedreno bae Jok!
+        # Kito tambah -Dandroid-stub=true buat ngakali dependency cutils dkk Jok!
         meson setup builddir/ \
           --cross-file ../.github/workflows/android-aarch64.txt \
           -Dplatforms=android \
           -Dgallium-drivers= \
           -Dvulkan-drivers=freedreno \
+          -Dandroid-stub=true \
           -Dbuildtype=release \
           -Db_lto=true
 
