@@ -89,7 +89,19 @@ jobs:
         mkdir -p output/
         cp mesa-src/builddir/src/freedreno/vulkan/libvulkan_freedreno.so output/
         cp custom_drirc output/.drirc
-        echo '{"name": "Mesa Turnip Custom Adreno 720 (Adem Edition)", "driverVersion": "v24.1.3-Custom", "author": "Jok AI Core"}' > output/meta.json
+        cat <<EOF > output/meta.json
+        {
+          "schemaVersion": 1,
+          "name": "Mesa Turnip Custom Adreno 720 (Adem Edition)",
+          "description": "Custom-built Turnip Vulkan driver from Mesa 24.1.3, tuned for Adreno 720.",
+          "author": "Jok AI Core",
+          "packageVersion": "1",
+          "vendor": "Mesa",
+          "driverVersion": "24.1.3",
+          "minApi": 27,
+          "libraryName": "libvulkan_freedreno.so"
+        }
+        EOF
         cd output && zip -r ../turnip-adreno720-custom.zip ./*
 
     - name: Upload Finished Driver
