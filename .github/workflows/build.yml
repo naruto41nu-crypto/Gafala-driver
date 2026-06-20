@@ -56,6 +56,12 @@ jobs:
         endian = 'little'
         EOF
 
+    - name: Add libdrm Subproject (Fallback)
+      run: |
+        cd mesa-src
+        mkdir -p subprojects
+        meson wrap install libdrm
+
     - name: Configure Meson Build
       run: |
         export PATH=$ANDROID_NDK_LATEST_HOME/toolchains/llvm/prebuilt/linux-x86_64/bin:$PATH
