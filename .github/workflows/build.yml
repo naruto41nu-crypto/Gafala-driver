@@ -74,6 +74,7 @@ jobs:
           -Dandroid-stub=true \
           -Dbuildtype=release \
           -Db_lto=true \
+          -Dzstd=disabled \
           --force-fallback-for=libdrm
 
     - name: Compile Driver Code
