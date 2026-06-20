@@ -23,13 +23,8 @@ jobs:
 
     - name: Download & Extract Mesa Source Code
       run: |
-        # Kito download langsung archive resmi versi 24.1.3 biar anti tecekat Git
         wget https://archive.mesa3d.org/mesa-24.1.3.tar.xz
-        
-        # Ekstrak file archive nyo
         tar -xf mesa-24.1.3.tar.xz
-        
-        # Rename folder hasil ekstrak dangan namo mesa-src biar pas dangan step bawahnyo
         mv mesa-24.1.3 mesa-src
 
     - name: Inject Tweak Adem Adreno 720
@@ -44,12 +39,13 @@ jobs:
     - name: Setup Cross-Compilation File
       run: |
         mkdir -p .github/workflows/
+        # Kito perbaiki binari [binaries] nyo pake rute LLVM modern bawak'an NDK
         cat <<EOF > .github/workflows/android-aarch64.txt
         [binaries]
         c = 'aarch64-linux-android33-clang'
         cpp = 'aarch64-linux-android33-clang++'
-        ar = 'aarch64-linux-android-ar'
-        strip = 'aarch64-linux-android-strip'
+        ar = 'llvm-ar'
+        strip = 'llvm-strip'
         pkgconfig = 'pkg-config'
 
         [host_machine]
