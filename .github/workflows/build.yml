@@ -56,11 +56,12 @@ jobs:
         endian = 'little'
         EOF
 
-    - name: Add libdrm Subproject (Fallback)
+    - name: Add libdrm & zlib Subprojects (Fallback)
       run: |
         cd mesa-src
         mkdir -p subprojects
         meson wrap install libdrm
+        meson wrap install zlib
 
     - name: Configure Meson Build
       run: |
@@ -75,7 +76,7 @@ jobs:
           -Dbuildtype=release \
           -Db_lto=true \
           -Dzstd=disabled \
-          --force-fallback-for=libdrm
+          --force-fallback-for=libdrm,zlib
 
     - name: Compile Driver Code
       run: |
