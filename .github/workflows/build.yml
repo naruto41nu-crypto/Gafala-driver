@@ -20,6 +20,8 @@ jobs:
       run: |
         sudo apt-get update
         sudo apt-get install -y meson ninja-build python3-dev libxrandr-dev glslang-tools zip pkg-config wget tar
+        # Kito tambah pip install mako di siko Jok!
+        pip install mako
 
     - name: Download & Extract Mesa Source Code
       run: |
@@ -58,7 +60,6 @@ jobs:
       run: |
         export PATH=$ANDROID_NDK_LATEST_HOME/toolchains/llvm/prebuilt/linux-x86_64/bin:$PATH
         cd mesa-src
-        # Kito tambah -Dandroid-stub=true buat ngakali dependency cutils dkk Jok!
         meson setup builddir/ \
           --cross-file ../.github/workflows/android-aarch64.txt \
           -Dplatforms=android \
