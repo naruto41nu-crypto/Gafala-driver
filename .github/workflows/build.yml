@@ -23,8 +23,13 @@ jobs:
 
     - name: Clone Mesa Official Stable Tag
       run: |
-        # Format tag yang bener langsung angko Jok, tanpa embel-embel kata 'mesa-'
-        git clone --branch 24.1.3 --single-branch --depth 1 https://github.com/Mesa/mesa.git mesa-src
+        # Tarik metadata utama repo secara shallow
+        git clone --depth 1 https://github.com/Mesa/mesa.git mesa-src
+        cd mesa-src
+        # Tarik paksa tag rilis stable 24.1.3 secara spesifik
+        git fetch --tags --depth 1 origin tag 24.1.3
+        # Paksa pindah isi folder ke rilis tag tersebut
+        git checkout tags/24.1.3
 
     - name: Inject Tweak Adem Adreno 720
       run: |
