@@ -19,17 +19,18 @@ jobs:
     - name: Install Dependencies
       run: |
         sudo apt-get update
-        sudo apt-get install -y meson ninja-build python3-dev libxrandr-dev glslang-tools zip pkg-config
+        sudo apt-get install -y meson ninja-build python3-dev libxrandr-dev glslang-tools zip pkg-config wget tar
 
-    - name: Clone Mesa Official Stable Tag
+    - name: Download & Extract Mesa Source Code
       run: |
-        # Tarik metadata utama repo secara shallow
-        git clone --depth 1 https://github.com/Mesa/mesa.git mesa-src
-        cd mesa-src
-        # Tarik paksa tag rilis stable 24.1.3 secara spesifik
-        git fetch --tags --depth 1 origin tag 24.1.3
-        # Paksa pindah isi folder ke rilis tag tersebut
-        git checkout tags/24.1.3
+        # Kito download langsung archive resmi versi 24.1.3 biar anti tecekat Git
+        wget https://archive.mesa3d.org/mesa-24.1.3.tar.xz
+        
+        # Ekstrak file archive nyo
+        tar -xf mesa-24.1.3.tar.xz
+        
+        # Rename folder hasil ekstrak dangan namo mesa-src biar pas dangan step bawahnyo
+        mv mesa-24.1.3 mesa-src
 
     - name: Inject Tweak Adem Adreno 720
       run: |
