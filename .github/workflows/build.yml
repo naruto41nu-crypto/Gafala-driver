@@ -13,6 +13,7 @@ jobs:
       with:
         repository: 'mesa3d/mesa'
         ref: 'main'
+        fetch-depth: 1
 
     - name: Setup Android NDK & Build Tools
       uses: actions/setup-python@v5
