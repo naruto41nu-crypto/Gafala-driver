@@ -11,7 +11,7 @@ jobs:
     - name: Checkout Mesa Source Code
       uses: actions/checkout@v4
       with:
-        repository: 'mesa3d/mesa'
+        repository: 'Mesa/mesa'
         ref: 'main'
         fetch-depth: 1
 
