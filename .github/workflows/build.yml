@@ -58,13 +58,12 @@ jobs:
       run: |
         export PATH=$ANDROID_NDK_LATEST_HOME/toolchains/llvm/prebuilt/linux-x86_64/bin:$PATH
         cd mesa-src
-        # Kito matike gallium driver & opencl biar gak nyari libclc lagi Jok
+        # Di siko kito cuman pake gallium kosong langan vulkan freedreno bae Jok!
         meson setup builddir/ \
           --cross-file ../.github/workflows/android-aarch64.txt \
           -Dplatforms=android \
           -Dgallium-drivers= \
           -Dvulkan-drivers=freedreno \
-          -Dopencl=disabled \
           -Dbuildtype=release \
           -Db_lto=true
 
