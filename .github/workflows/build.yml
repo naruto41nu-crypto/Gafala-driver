@@ -23,16 +23,16 @@ jobs:
 
     - name: Force Clone Mesa Official (Shallow)
       run: |
-        # Mengkloning paksa langsung dari URL resmi Mesa dengan kedalaman 1 agar super cepat
+        # Mengkloning langsung dari URL resmi Mesa
         git clone --depth 1 https://github.com/Mesa/mesa.git mesa-src
 
     - name: Inject Tweak Adem Adreno 720
       run: |
-        # Memasukkan opsi drirc langsung ke file konfigurasi default mesa sebelum di-compile
-        echo '<device driver="turnip">' >> mesa-src/src/util/00-mesa-defaults.conf
-        echo '    <option name="disable_gmem_load" value="true" />' >> mesa-src/src/util/00-mesa-defaults.conf
-        echo '    <option name="vk_xwayland_wait_ready" value="false" />' >> mesa-src/src/util/00-mesa-defaults.conf
-        echo '</device>' >> mesa-src/src/util/00-mesa-defaults.conf
+        # Membuat file drirc mandiri tanpa ngerusak file default bawaan mesa
+        echo '<device driver="turnip">' > custom_drirc
+        echo '    <option name="disable_gmem_load" value="true" />' >> custom_drirc
+        echo '    <option name="vk_xwayland_wait_ready" value="false" />' >> custom_drirc
+        echo '</device>' >> custom_drirc
 
     - name: Setup Cross-Compilation File
       run: |
@@ -74,6 +74,8 @@ jobs:
       run: |
         mkdir -p output/
         cp builddir/src/freedreno/vulkan/libvulkan_freedreno.so output/
+        # Memasukkan file tweak adem tadi langsung ke dalam paket driver zip biar dibaca emulator
+        cp custom_drirc output/.drirc
         echo '{"name": "Mesa Turnip Custom Adreno 720 (Adem Edition)", "driverVersion": "v26.0.0-Custom", "author": "Jok AI Core"}' > output/meta.json
         cd output && zip -r ../turnip-adreno720-custom.zip ./*
 
