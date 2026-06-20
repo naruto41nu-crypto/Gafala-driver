@@ -1,7 +1,7 @@
 name: Build Custom Mesa Turnip Adreno 720
 
 on:
-  workflow_dispatch: # Biar pacak kau klik tombol Run Workflow manual dari GitHub
+  workflow_dispatch:
 
 jobs:
   build:
@@ -23,12 +23,11 @@ jobs:
 
     - name: Clone Mesa Official Stable Tag
       run: |
-        # Kito tembak tag rilis stable (misal mesa-24.1.3) biar file meson.build nyo pasti aman & katek yang ilang
-        git clone --branch mesa-24.1.3 --depth 1 https://github.com/Mesa/mesa.git mesa-src
+        # Format tag yang bener langsung angko Jok, tanpa embel-embel kata 'mesa-'
+        git clone --branch 24.1.3 --single-branch --depth 1 https://github.com/Mesa/mesa.git mesa-src
 
     - name: Inject Tweak Adem Adreno 720
       run: |
-        # Simpan dulu custom drirc di folder workspace
         cat <<EOF > custom_drirc
         <device driver="turnip">
             <option name="disable_gmem_load" value="true" />
@@ -57,11 +56,7 @@ jobs:
     - name: Configure Meson Build
       run: |
         export PATH=$ANDROID_NDK_LATEST_HOME/toolchains/llvm/prebuilt/linux-x86_64/bin:$PATH
-        
-        # Pindah ke folder mesa-src tempat meson.build yang asli berendo
         cd mesa-src
-        
-        # Kito jalankan setup build directory langsung di dalemnyo
         meson setup builddir/ \
           --cross-file ../.github/workflows/android-aarch64.txt \
           -Dplatforms=android \
@@ -79,14 +74,9 @@ jobs:
     - name: Package Driver to ZIP for Yuzu
       run: |
         mkdir -p output/
-        # Salin file driver .so hasil compile
         cp mesa-src/builddir/src/freedreno/vulkan/libvulkan_freedreno.so output/
-        # Salin file tweak adem .drirc
         cp custom_drirc output/.drirc
-        # Buat meta data info untuk emulator
         echo '{"name": "Mesa Turnip Custom Adreno 720 (Adem Edition)", "driverVersion": "v24.1.3-Custom", "author": "Jok AI Core"}' > output/meta.json
-        
-        # Zip isi folder output
         cd output && zip -r ../turnip-adreno720-custom.zip ./*
 
     - name: Upload Finished Driver
