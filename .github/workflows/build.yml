@@ -76,6 +76,7 @@ jobs:
           -Dbuildtype=release \
           -Db_lto=true \
           -Dzstd=disabled \
+          -Ddefault_library=static \
           --force-fallback-for=libdrm,zlib
 
     - name: Compile Driver Code
