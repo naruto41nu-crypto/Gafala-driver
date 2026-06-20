@@ -67,7 +67,6 @@ jobs:
           --cross-file ../.github/workflows/android-aarch64.txt \
           -Dplatforms=android \
           -Dvulkan-drivers=freedreno \
-          -Dfreedreno-kmd=kgsl \
           -Dbuildtype=release \
           -Db_lto=true
 
