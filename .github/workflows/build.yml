@@ -8,12 +8,8 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-    - name: Checkout Mesa Source Code
+    - name: Checkout Minimal Repo
       uses: actions/checkout@v4
-      with:
-        repository: 'Mesa/mesa'
-        ref: 'main'
-        fetch-depth: 1
 
     - name: Setup Android NDK & Build Tools
       uses: actions/setup-python@v5
@@ -25,13 +21,18 @@ jobs:
         sudo apt-get update
         sudo apt-get install -y meson ninja-build pyext-dev libxrandr-dev glslang-tools zip
 
+    - name: Force Clone Mesa Official (Shallow)
+      run: |
+        # Mengkloning paksa langsung dari URL resmi Mesa dengan kedalaman 1 agar super cepat
+        git clone --depth 1 https://github.com/Mesa/mesa.git mesa-src
+
     - name: Inject Tweak Adem Adreno 720
       run: |
         # Memasukkan opsi drirc langsung ke file konfigurasi default mesa sebelum di-compile
-        echo '<device driver="turnip">' >> src/util/00-mesa-defaults.conf
-        echo '    <option name="disable_gmem_load" value="true" />' >> src/util/00-mesa-defaults.conf
-        echo '    <option name="vk_xwayland_wait_ready" value="false" />' >> src/util/00-mesa-defaults.conf
-        echo '</device>' >> src/util/00-mesa-defaults.conf
+        echo '<device driver="turnip">' >> mesa-src/src/util/00-mesa-defaults.conf
+        echo '    <option name="disable_gmem_load" value="true" />' >> mesa-src/src/util/00-mesa-defaults.conf
+        echo '    <option name="vk_xwayland_wait_ready" value="false" />' >> mesa-src/src/util/00-mesa-defaults.conf
+        echo '</device>' >> mesa-src/src/util/00-mesa-defaults.conf
 
     - name: Setup Cross-Compilation File
       run: |
@@ -55,8 +56,9 @@ jobs:
     - name: Configure Meson Build
       run: |
         export PATH=$ANDROID_NDK_LATEST_HOME/toolchains/llvm/prebuilt/linux-x86_64/bin:$PATH
-        meson setup builddir/ \
-          --cross-file .github/workflows/android-aarch64.txt \
+        cd mesa-src
+        meson setup ../builddir/ \
+          --cross-file ../.github/workflows/android-aarch64.txt \
           -Dplatforms=android \
           -Dvulkan-drivers=freedreno \
           -Dfreedreno-kmd=kgsl \
