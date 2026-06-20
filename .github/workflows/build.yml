@@ -53,9 +53,10 @@ jobs:
     - name: Configure Meson Build
       run: |
         export PATH=$ANDROID_NDK_LATEST_HOME/toolchains/llvm/prebuilt/linux-x86_64/bin:$PATH
-        # Kita setup build di dalam folder mesa-src langsung biar gak bingung directory
-        meson setup mesa-src/builddir mesa-src/ \
-          --cross-file .github/workflows/android-aarch64.txt \
+        # Pindah langsung ke folder source biar meson gak tersesat
+        cd mesa-src
+        meson setup builddir \
+          --cross-file ../.github/workflows/android-aarch64.txt \
           -Dplatforms=android \
           -Dvulkan-drivers=freedreno \
           -Dfreedreno-kmd=kgsl \
@@ -65,7 +66,8 @@ jobs:
     - name: Compile Driver Code
       run: |
         export PATH=$ANDROID_NDK_LATEST_HOME/toolchains/llvm/prebuilt/linux-x86_64/bin:$PATH
-        ninja -C mesa-src/builddir/ src/freedreno/vulkan/libvulkan_freedreno.so
+        cd mesa-src
+        ninja -C builddir/ src/freedreno/vulkan/libvulkan_freedreno.so
 
     - name: Package Driver to ZIP for Yuzu
       run: |
