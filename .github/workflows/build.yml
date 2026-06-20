@@ -1,7 +1,7 @@
 name: Build Custom Mesa Turnip Adreno 720
 
 on:
-  workflow_dispatch: # Biar pacak kau klik tombol Run manual dari HP
+  workflow_dispatch:
 
 jobs:
   build:
@@ -23,12 +23,10 @@ jobs:
 
     - name: Force Clone Mesa Official (Shallow)
       run: |
-        # Mengkloning langsung dari URL resmi Mesa
         git clone --depth 1 https://github.com/Mesa/mesa.git mesa-src
 
     - name: Inject Tweak Adem Adreno 720
       run: |
-        # Membuat file drirc mandiri tanpa ngerusak file default bawaan mesa
         echo '<device driver="turnip">' > custom_drirc
         echo '    <option name="disable_gmem_load" value="true" />' >> custom_drirc
         echo '    <option name="vk_xwayland_wait_ready" value="false" />' >> custom_drirc
@@ -37,7 +35,6 @@ jobs:
     - name: Setup Cross-Compilation File
       run: |
         mkdir -p .github/workflows/
-        # Membuat instruksi compiler untuk Android ARM64
         cat <<EOF > .github/workflows/android-aarch64.txt
         [binaries]
         c = 'aarch64-linux-android33-clang'
@@ -56,9 +53,9 @@ jobs:
     - name: Configure Meson Build
       run: |
         export PATH=$ANDROID_NDK_LATEST_HOME/toolchains/llvm/prebuilt/linux-x86_64/bin:$PATH
-        cd mesa-src
-        meson setup ../builddir/ \
-          --cross-file ../.github/workflows/android-aarch64.txt \
+        # Kita setup build di dalam folder mesa-src langsung biar gak bingung directory
+        meson setup mesa-src/builddir mesa-src/ \
+          --cross-file .github/workflows/android-aarch64.txt \
           -Dplatforms=android \
           -Dvulkan-drivers=freedreno \
           -Dfreedreno-kmd=kgsl \
@@ -68,13 +65,12 @@ jobs:
     - name: Compile Driver Code
       run: |
         export PATH=$ANDROID_NDK_LATEST_HOME/toolchains/llvm/prebuilt/linux-x86_64/bin:$PATH
-        ninja -C builddir/ src/freedreno/vulkan/libvulkan_freedreno.so
+        ninja -C mesa-src/builddir/ src/freedreno/vulkan/libvulkan_freedreno.so
 
     - name: Package Driver to ZIP for Yuzu
       run: |
         mkdir -p output/
-        cp builddir/src/freedreno/vulkan/libvulkan_freedreno.so output/
-        # Memasukkan file tweak adem tadi langsung ke dalam paket driver zip biar dibaca emulator
+        cp mesa-src/builddir/src/freedreno/vulkan/libvulkan_freedreno.so output/
         cp custom_drirc output/.drirc
         echo '{"name": "Mesa Turnip Custom Adreno 720 (Adem Edition)", "driverVersion": "v26.0.0-Custom", "author": "Jok AI Core"}' > output/meta.json
         cd output && zip -r ../turnip-adreno720-custom.zip ./*
