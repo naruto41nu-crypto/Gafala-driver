@@ -1,0 +1,81 @@
+name: Build Custom Mesa Turnip Adreno 720
+
+on:
+  workflow_dispatch: # Biar pacak kau klik tombol Run manual dari HP
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout Mesa Source Code
+      uses: actions/checkout@v4
+      with:
+        repository: 'mesa3d/mesa'
+        ref: 'main'
+
+    - name: Setup Android NDK & Build Tools
+      uses: actions/setup-python@v5
+      with:
+        python-version: '3.10'
+
+    - name: Install Dependencies
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y meson ninja-build pyext-dev libxrandr-dev glslang-tools zip
+
+    - name: Inject Tweak Adem Adreno 720
+      run: |
+        # Memasukkan opsi drirc langsung ke file konfigurasi default mesa sebelum di-compile
+        echo '<device driver="turnip">' >> src/util/00-mesa-defaults.conf
+        echo '    <option name="disable_gmem_load" value="true" />' >> src/util/00-mesa-defaults.conf
+        echo '    <option name="vk_xwayland_wait_ready" value="false" />' >> src/util/00-mesa-defaults.conf
+        echo '</device>' >> src/util/00-mesa-defaults.conf
+
+    - name: Setup Cross-Compilation File
+      run: |
+        mkdir -p .github/workflows/
+        # Membuat instruksi compiler untuk Android ARM64
+        cat <<EOF > .github/workflows/android-aarch64.txt
+        [binaries]
+        c = 'aarch64-linux-android33-clang'
+        cpp = 'aarch64-linux-android33-clang++'
+        ar = 'aarch64-linux-android-ar'
+        strip = 'aarch64-linux-android-strip'
+        pkgconfig = 'pkg-config'
+
+        [host_machine]
+        system = 'android'
+        cpu_family = 'aarch64'
+        cpu = 'armv8-a'
+        endian = 'little'
+        EOF
+
+    - name: Configure Meson Build
+      run: |
+        export PATH=$ANDROID_NDK_LATEST_HOME/toolchains/llvm/prebuilt/linux-x86_64/bin:$PATH
+        meson setup builddir/ \
+          --cross-file .github/workflows/android-aarch64.txt \
+          -Dplatforms=android \
+          -Dvulkan-drivers=freedreno \
+          -Dfreedreno-kmd=kgsl \
+          -Dbuildtype=release \
+          -Db_lto=true
+
+    - name: Compile Driver Code
+      run: |
+        export PATH=$ANDROID_NDK_LATEST_HOME/toolchains/llvm/prebuilt/linux-x86_64/bin:$PATH
+        ninja -C builddir/ src/freedreno/vulkan/libvulkan_freedreno.so
+
+    - name: Package Driver to ZIP for Yuzu
+      run: |
+        mkdir -p output/
+        cp builddir/src/freedreno/vulkan/libvulkan_freedreno.so output/
+        echo '{"name": "Mesa Turnip Custom Adreno 720 (Adem Edition)", "driverVersion": "v26.0.0-Custom", "author": "Jok AI Core"}' > output/meta.json
+        cd output && zip -r ../turnip-adreno720-custom.zip ./*
+
+    - name: Upload Finished Driver
+      uses: actions/upload-artifact@v4
+      with:
+        name: turnip-adreno720-custom
+        path: turnip-adreno720-custom.zip
