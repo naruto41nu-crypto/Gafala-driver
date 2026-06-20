@@ -1,7 +1,7 @@
 name: Build Custom Mesa Turnip Adreno 720
 
 on:
-  workflow_dispatch: # Biar pacak kau klik tombol Run manual dari HP
+  workflow_dispatch:
 
 jobs:
   build:
@@ -53,10 +53,28 @@ jobs:
     - name: Configure Meson Build
       run: |
         export PATH=$ANDROID_NDK_LATEST_HOME/toolchains/llvm/prebuilt/linux-x86_64/bin:$PATH
-        # Kita langsung masuk ke sub-folder mesa tempat meson.build yang asli ngumpet
-        cd mesa-src/mesa
-        meson setup builddir \
-          --cross-file ../../.github/workflows/android-aarch64.txt \
+        
+        echo "=== CEK REAL PATH ==="
+        pwd
+        
+        echo "=== KITO CARI POSISI ASLI FILE MESON.BUILD ==="
+        find $GITHUB_WORKSPACE -name "meson.build"
+        
+        # Kito simpan hasil pencarian ke variabel biar kito pacak eksekusi langsung dari sumbernyo
+        MESON_FILE=$(find $GITHUB_WORKSPACE -name "meson.build" | head -n 1)
+        
+        if [ -z "$MESON_FILE" ]; then
+          echo "WADUH JOK! File meson.build emang beneran katek di seluruh repo!"
+          exit 1
+        fi
+        
+        # Ambil path foldernyo bae
+        SOURCEDIR=$(dirname "$MESON_FILE")
+        echo "Lokasi asli source code: $SOURCEDIR"
+        
+        # Jalanin setup pake path absolut biar meson dak katek alasan lagi
+        meson setup "$SOURCEDIR/builddir" "$SOURCEDIR" \
+          --cross-file $GITHUB_WORKSPACE/.github/workflows/android-aarch64.txt \
           -Dplatforms=android \
           -Dvulkan-drivers=freedreno \
           -Dfreedreno-kmd=kgsl \
@@ -66,14 +84,15 @@ jobs:
     - name: Compile Driver Code
       run: |
         export PATH=$ANDROID_NDK_LATEST_HOME/toolchains/llvm/prebuilt/linux-x86_64/bin:$PATH
-        cd mesa-src/mesa
+        SOURCEDIR=$(dirname $(find $GITHUB_WORKSPACE -name "meson.build" | head -n 1))
+        cd "$SOURCEDIR"
         ninja -C builddir/ src/freedreno/vulkan/libvulkan_freedreno.so
 
     - name: Package Driver to ZIP for Yuzu
       run: |
         mkdir -p output/
-        # Sesuaikan path copy karena builddir sekarang ada di dalam mesa-src/mesa
-        cp mesa-src/mesa/builddir/src/freedreno/vulkan/libvulkan_freedreno.so output/
+        SOURCEDIR=$(dirname $(find $GITHUB_WORKSPACE -name "meson.build" | head -n 1))
+        cp "$SOURCEDIR/builddir/src/freedreno/vulkan/libvulkan_freedreno.so" output/
         cp custom_drirc output/.drirc
         echo '{"name": "Mesa Turnip Custom Adreno 720 (Adem Edition)", "driverVersion": "v26.0.0-Custom", "author": "Jok AI Core"}' > output/meta.json
         cd output && zip -r ../turnip-adreno720-custom.zip ./*
