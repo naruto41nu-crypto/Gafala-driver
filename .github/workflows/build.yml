@@ -1,7 +1,7 @@
 name: Build Custom Mesa Turnip Adreno 720
 
 on:
-  workflow_dispatch:
+  workflow_dispatch: # Biar pacak kau klik tombol Run Workflow manual dari GitHub
 
 jobs:
   build:
@@ -19,18 +19,22 @@ jobs:
     - name: Install Dependencies
       run: |
         sudo apt-get update
-        sudo apt-get install -y meson ninja-build python3-dev libxrandr-dev glslang-tools zip
+        sudo apt-get install -y meson ninja-build python3-dev libxrandr-dev glslang-tools zip pkg-config
 
-    - name: Force Clone Mesa Official (Shallow)
+    - name: Clone Mesa Official Stable Tag
       run: |
-        git clone --depth 1 https://github.com/Mesa/mesa.git mesa-src
+        # Kito tembak tag rilis stable (misal mesa-24.1.3) biar file meson.build nyo pasti aman & katek yang ilang
+        git clone --branch mesa-24.1.3 --depth 1 https://github.com/Mesa/mesa.git mesa-src
 
     - name: Inject Tweak Adem Adreno 720
       run: |
-        echo '<device driver="turnip">' > custom_drirc
-        echo '    <option name="disable_gmem_load" value="true" />' >> custom_drirc
-        echo '    <option name="vk_xwayland_wait_ready" value="false" />' >> custom_drirc
-        echo '</device>' >> custom_drirc
+        # Simpan dulu custom drirc di folder workspace
+        cat <<EOF > custom_drirc
+        <device driver="turnip">
+            <option name="disable_gmem_load" value="true" />
+            <option name="vk_xwayland_wait_ready" value="false" />
+        </device>
+        EOF
 
     - name: Setup Cross-Compilation File
       run: |
@@ -54,27 +58,12 @@ jobs:
       run: |
         export PATH=$ANDROID_NDK_LATEST_HOME/toolchains/llvm/prebuilt/linux-x86_64/bin:$PATH
         
-        echo "=== CEK REAL PATH ==="
-        pwd
+        # Pindah ke folder mesa-src tempat meson.build yang asli berendo
+        cd mesa-src
         
-        echo "=== KITO CARI POSISI ASLI FILE MESON.BUILD ==="
-        find $GITHUB_WORKSPACE -name "meson.build"
-        
-        # Kito simpan hasil pencarian ke variabel biar kito pacak eksekusi langsung dari sumbernyo
-        MESON_FILE=$(find $GITHUB_WORKSPACE -name "meson.build" | head -n 1)
-        
-        if [ -z "$MESON_FILE" ]; then
-          echo "WADUH JOK! File meson.build emang beneran katek di seluruh repo!"
-          exit 1
-        fi
-        
-        # Ambil path foldernyo bae
-        SOURCEDIR=$(dirname "$MESON_FILE")
-        echo "Lokasi asli source code: $SOURCEDIR"
-        
-        # Jalanin setup pake path absolut biar meson dak katek alasan lagi
-        meson setup "$SOURCEDIR/builddir" "$SOURCEDIR" \
-          --cross-file $GITHUB_WORKSPACE/.github/workflows/android-aarch64.txt \
+        # Kito jalankan setup build directory langsung di dalemnyo
+        meson setup builddir/ \
+          --cross-file ../.github/workflows/android-aarch64.txt \
           -Dplatforms=android \
           -Dvulkan-drivers=freedreno \
           -Dfreedreno-kmd=kgsl \
@@ -84,17 +73,20 @@ jobs:
     - name: Compile Driver Code
       run: |
         export PATH=$ANDROID_NDK_LATEST_HOME/toolchains/llvm/prebuilt/linux-x86_64/bin:$PATH
-        SOURCEDIR=$(dirname $(find $GITHUB_WORKSPACE -name "meson.build" | head -n 1))
-        cd "$SOURCEDIR"
+        cd mesa-src
         ninja -C builddir/ src/freedreno/vulkan/libvulkan_freedreno.so
 
     - name: Package Driver to ZIP for Yuzu
       run: |
         mkdir -p output/
-        SOURCEDIR=$(dirname $(find $GITHUB_WORKSPACE -name "meson.build" | head -n 1))
-        cp "$SOURCEDIR/builddir/src/freedreno/vulkan/libvulkan_freedreno.so" output/
+        # Salin file driver .so hasil compile
+        cp mesa-src/builddir/src/freedreno/vulkan/libvulkan_freedreno.so output/
+        # Salin file tweak adem .drirc
         cp custom_drirc output/.drirc
-        echo '{"name": "Mesa Turnip Custom Adreno 720 (Adem Edition)", "driverVersion": "v26.0.0-Custom", "author": "Jok AI Core"}' > output/meta.json
+        # Buat meta data info untuk emulator
+        echo '{"name": "Mesa Turnip Custom Adreno 720 (Adem Edition)", "driverVersion": "v24.1.3-Custom", "author": "Jok AI Core"}' > output/meta.json
+        
+        # Zip isi folder output
         cd output && zip -r ../turnip-adreno720-custom.zip ./*
 
     - name: Upload Finished Driver
